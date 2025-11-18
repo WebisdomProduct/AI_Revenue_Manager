@@ -1,0 +1,7 @@
+project_id = "miikuidcdynhrfsnmrhw"
+
+[functions.google-sheets-sync]
+verify_jwt = false
+
+[functions.chat-assistant]
+verify_jwt = false

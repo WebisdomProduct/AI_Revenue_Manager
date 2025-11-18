@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Grand Budapest Hotel - Luxury Theme */
+    --background: 35 25% 97%;
+    --foreground: 345 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 345 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 345 25% 15%;
+
+    --primary: 345 65% 35%;
+    --primary-foreground: 35 45% 95%;
+
+    --secondary: 45 70% 55%;
+    --secondary-foreground: 345 25% 15%;
+
+    --muted: 35 20% 92%;
+    --muted-foreground: 345 15% 45%;
+
+    --accent: 45 75% 60%;
+    --accent-foreground: 345 25% 15%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 35 45% 95%;
+
+    --border: 35 15% 88%;
+    --input: 35 15% 88%;
+    --ring: 345 65% 35%;
+
+    --radius: 0.75rem;
+
+    /* Sidebar */
+    --sidebar-background: 345 60% 25%;
+    --sidebar-foreground: 35 45% 95%;
+    --sidebar-primary: 45 70% 55%;
+    --sidebar-primary-foreground: 345 25% 15%;
+    --sidebar-accent: 345 55% 30%;
+    --sidebar-accent-foreground: 35 45% 95%;
+    --sidebar-border: 345 50% 20%;
+    --sidebar-ring: 45 70% 55%;
+
+    /* Custom luxury colors */
+    --burgundy: 345 65% 35%;
+    --burgundy-light: 345 55% 45%;
+    --gold: 45 70% 55%;
+    --gold-light: 45 75% 65%;
+    --cream: 35 25% 97%;
+    --cream-dark: 35 20% 92%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(345 65% 35%) 0%, hsl(345 55% 45%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(45 70% 55%) 0%, hsl(45 75% 65%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(35 25% 97%) 0%, hsl(35 20% 92%) 100%);
+
+    /* Shadows */
+    --shadow-elegant: 0 4px 20px -2px hsl(345 65% 35% / 0.15);
+    --shadow-card: 0 2px 8px -1px hsl(345 25% 15% / 0.08);
+    --shadow-glow: 0 0 30px hsl(45 70% 55% / 0.3);
+
+    /* Animation */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    --background: 345 30% 8%;
+    --foreground: 35 45% 95%;
+
+    --card: 345 25% 12%;
+    --card-foreground: 35 45% 95%;
+
+    --popover: 345 25% 12%;
+    --popover-foreground: 35 45% 95%;
+
+    --primary: 345 60% 45%;
+    --primary-foreground: 35 45% 95%;
+
+    --secondary: 45 65% 50%;
+    --secondary-foreground: 345 25% 15%;
+
+    --muted: 345 20% 20%;
+    --muted-foreground: 35 20% 65%;
+
+    --accent: 45 70% 55%;
+    --accent-foreground: 345 25% 15%;
+
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 35 45% 95%;
+
+    --border: 345 20% 20%;
+    --input: 345 20% 20%;
+    --ring: 345 60% 45%;
+
+    --sidebar-background: 345 35% 10%;
+    --sidebar-foreground: 35 45% 95%;
+    --sidebar-primary: 45 70% 55%;
+    --sidebar-primary-foreground: 345 25% 15%;
+    --sidebar-accent: 345 30% 15%;
+    --sidebar-accent-foreground: 35 45% 95%;
+    --sidebar-border: 345 25% 12%;
+    --sidebar-ring: 45 70% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
