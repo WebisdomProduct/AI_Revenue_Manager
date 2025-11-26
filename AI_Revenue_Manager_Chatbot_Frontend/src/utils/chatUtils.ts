@@ -1,3 +1,4 @@
+// src/utils/chatUtils.ts
 export interface ChatMessage {
   id: string;
   role: 'ai' | 'user';
@@ -70,42 +71,42 @@ export function createSessionObject(
   };
 }
 
-// Backend-ready: logs for now, can be replaced with real fetch
+/* -----------------------------------------------------------
+   SAVE CHAT → backend (not Apps Script)
+----------------------------------------------------------- */
 export async function saveChatToBackend(sessionObject: ChatSession): Promise<void> {
-  console.log("saveChatToBackend called", sessionObject);
-  
+  console.log("📤 Sending session to backend:", sessionObject);
+
   try {
-    const VITE_APPS_SCRIPT_URL  = import.meta.env.VITE_APPS_SCRIPT_URL;
-    // https://script.google.com/macros/s/AKfycbxJHtY72haw0rEzp3iugWBp2TpyDbYXobr-hmVz2ofnr9pJcEIh02GfP1De9uUan-JX/exec
-    const response = await fetch(VITE_APPS_SCRIPT_URL, {
+    const API_URL = import.meta.env.VITE_API_URL + "/save-chat";
+
+    const response = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      // body: JSON.stringify(sessionObject)
-      body: JSON.stringify({
-        type: "chat_transcript", // distinguishes this request
-        data: sessionObject
-      })
+      body: JSON.stringify(sessionObject),
     });
 
+    if (!response.ok) {
+      console.error("❌ Backend save failed:", response.statusText);
+      return;
+    }
     const data = await response.json();
 
-    if (data.status !== "ok") {
-      console.warn("Failed to save session:", data.message);
-    } else {
-      console.log("✅ Chat session saved successfully:", sessionObject.chatId);
-    }
+    // const text = await response.text();
+    // console.log("Raw Apps Script response:", text);
+    // const data = JSON.parse(text); // parse manually if needed
+
+    console.log("✅ Backend save result:", data);
+
   } catch (error) {
-    console.error("Error saving chat to backend:", error);
-    // Do not throw to avoid blocking the user
+    // console.log("✅ Backend save error:", data);
+    console.error("❌ Error saving chat:", error);
   }
-
-  console.log("Payload being sent to Apps Script:", {
-    type: "chat_transcript",
-    data: sessionObject
-  });
-
 }
 
+/* -----------------------------------------------------------
+   DOWNLOAD TRANSCRIPT (unchanged)
+----------------------------------------------------------- */
 export function downloadTranscript(sessionObject: ChatSession): void {
   const content = `Chat Transcript
 ================

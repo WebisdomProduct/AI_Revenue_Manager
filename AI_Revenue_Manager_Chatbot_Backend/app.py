@@ -5,6 +5,7 @@ import google.generativeai as genai
 from config import (
     GEMINI_API_KEY,
     GEMINI_MODEL,
+    APPS_SCRIPT_URL,
 )
 
 # ---------------------------------------------------------
@@ -16,6 +17,25 @@ genai.configure(api_key=GEMINI_API_KEY)
 
 app = FastAPI()
 
+from fastapi.middleware.cors import CORSMiddleware
+
+origins = [
+    "http://localhost:8080", # Vite dev
+    "http://127.0.0.1:8080",
+    "http://localhost:8081",
+    "http://localhost:5173", # Vite alt port
+    "http://127.0.0.1:5173",
+    # "https://<your-project>.web.app",        # Firebase hosting on .app
+    # "https://<your-project>.firebaseapp.com" # hosting on domain
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ---------------------------------------------------------
 # REQUEST / RESPONSE MODELS
@@ -104,22 +124,6 @@ def convert_messages(history, system_prompt, client_name):
 
     return messages
 
-
-from fastapi.middleware.cors import CORSMiddleware
-
-origins = [
-    "http://localhost:8080",  # your frontend
-    "http://127.0.0.1:8080"
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],#origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # ---------------------------------------------------------
 # LLM CHAT ENDPOINT
 # ---------------------------------------------------------
@@ -145,20 +149,78 @@ async def llm_chat(req: ChatRequest):
 # ---------------------------------------------------------
 # SAVE CHAT SESSION ENDPOINT
 # ---------------------------------------------------------
-@app.post("/save-chat")
-async def save_chat(session: ChatSession):
-    """
-    Receives chat session from frontend and stores/logs it.
-    In production, you can save this to a database or Google Sheet.
-    """
-    # For demo purposes, we just print it
-    print("📤 Received chat session:")
-    print(session.json(indent=2))
-    return {"status": "success", "message": "Chat session saved"}
+# @app.post("/save-chat")
+# async def save_chat(session: ChatSession):
+#     """
+#     Receives chat session from frontend and stores/logs it.
+#     In production, you can save this to a database or Google Sheet.
+#     """
+#     # For demo purposes, we just print it
+#     print("📤 Received chat session:")
+#     print(session.json(indent=2))
+#     return {"status": "success", "message": "Chat session saved"}
+
+# from fastapi import Request
 
 # @app.post("/save-chat")
 # async def save_chat(request: Request):
-#     data = await request.json()
-#     print("Saved session:", data)  # for now, just log
-#     # TODO: persist to database or file
-#     return {"status": "ok"}
+#     try:
+#         data = await request.json()
+#         print("📤 Received chat session:")
+#         print(data)
+#         return {"status": "success", "message": "Chat session saved"}
+#     except Exception as e:
+#         print("❌ ERROR:", e)
+#         raise e
+
+from fastapi import Request
+import httpx  # async HTTP client
+import json
+
+@app.post("/save-chat")
+async def save_chat(request: Request):
+    """
+    Receives chat session from frontend and forwards it to Apps Script
+    so it can be saved in Google Sheets.
+    """
+    try:
+        session = await request.json()
+        print("📤 Received chat session:", session)
+        # import os
+        # APPS_SCRIPT_URL="https://script.google.com/macros/s/AKfycbwz15KPgZF4t8aQ_YmR-pWNHixj2nYfykXMH3PXzZ-qqMssf9_inBgZwAfTZNVbGt5u/exec"
+        # APPS_SCRIPT_URL = os.environ.get(APPS_SCRIPT_URL)
+        if not APPS_SCRIPT_URL:
+            return {"status": "error", "message": "Apps Script URL not configured"}
+
+        # test code to check web app URL
+        print("APPS_SCRIPT_URL:", APPS_SCRIPT_URL)
+
+        # Forward to Apps Script
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                APPS_SCRIPT_URL,
+                json=session,
+                headers={"Content-Type": "application/json"},
+                timeout=10.0
+            )
+
+            # resp_data = resp.json()
+
+            # Robust parsing
+            resp_text = resp.text.strip()
+            try:
+                resp_data = json.loads(resp_text)
+            except json.JSONDecodeError:
+                # fallback: treat raw text as message
+                resp_data = {"status": "unknown", "message": resp_text}
+                print("⚠️ Warning: Apps Script response not valid JSON, raw text:", resp_text)
+
+            print("📤 Response from Apps Script:", resp_data)
+
+        return {"status": "success", "appsScriptResponse": resp_data}
+
+    except Exception as e:
+        print("❌ ERROR saving chat:", e)
+        return {"status": "error", "message": str(e)}
+
+    

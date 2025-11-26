@@ -10,7 +10,7 @@ env/
 
 # Secrets
 .env
-service_account.json
+ai-revenue-manager-db-backend.json
 
 # OS
 .DS_Store
