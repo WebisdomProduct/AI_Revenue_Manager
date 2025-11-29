@@ -24,9 +24,11 @@ const Index = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
+  // Regex patterns
   const emailRegex = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i;
   const phoneRegex = /(\+?\d{1,3}[-.\s]?)?(\(?\d{2,4}\)?[-.\s]?){1,2}\d{3,4}/g;
 
+  // Initialize chat
   useEffect(() => {
     const greeting: ChatMessageType = {
       id: `msg-${Date.now()}`,
@@ -37,6 +39,7 @@ const Index = () => {
     setMessages([greeting]);
   }, []);
 
+  // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -45,16 +48,19 @@ const Index = () => {
     setClientInfo(prev => {
       const updated = { ...prev };
 
+      // Extract email
       if (!prev.email) {
         const emailMatch = content.match(emailRegex);
         if (emailMatch) updated.email = emailMatch[0];
       }
 
+      // Extract phone
       if (!prev.phone) {
         const phoneMatch = content.match(phoneRegex);
         if (phoneMatch?.length) updated.phone = phoneMatch[0];
       }
 
+      // Extract name: first 1-2 capitalized words if name not set
       if (!prev.name) {
         const nameMatch = content.match(/\b[A-Z][a-z]+(?:\s[A-Z][a-z]+)?\b/);
         if (nameMatch) updated.name = nameMatch[0];
@@ -73,8 +79,10 @@ const Index = () => {
     };
     setMessages(prev => [...prev, userMessage]);
 
+    // Extract client info automatically
     extractClientInfo(content);
 
+    // Send message to backend
     setLoading(true);
     try {
       const API_URL = import.meta.env.VITE_API_URL;
@@ -136,6 +144,7 @@ const Index = () => {
 
   const saveSession = async () => {
     try {
+      // If clientInfo fields are missing, just use empty strings
       const session = createSessionObject(messages, {
         name: clientInfo.name,
         email: clientInfo.email,

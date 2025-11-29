@@ -1,0 +1,12 @@
+{
+  "hosting": [
+    {
+      "site": "ai-revenue-manager-dashboard",
+      "public": "dist",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [
+        { "source": "**", "destination": "/index.html" }
+      ]
+    }
+  ]
+}

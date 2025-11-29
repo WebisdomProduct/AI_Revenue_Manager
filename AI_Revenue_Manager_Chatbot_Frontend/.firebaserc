@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "ai-revenue-manager"
+  },
+  "targets": {
+    "ai-revenue-manager": {
+      "hosting": {
+        "ai-revenue-manager-chatbot": [
+          "ai-revenue-manager-chatbott"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

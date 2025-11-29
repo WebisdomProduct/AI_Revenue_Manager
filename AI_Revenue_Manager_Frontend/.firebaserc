@@ -1,0 +1,12 @@
+{
+  "projects": {
+    "default": "ai-revenue-manager"
+  },
+  "targets": {
+    "ai-revenue-manager": {
+      "hosting": {
+        "dashboard": ["ai-revenue-manager-dashboard"]
+      }
+    }
+  }
+}

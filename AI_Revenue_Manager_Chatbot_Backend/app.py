@@ -1,12 +1,31 @@
+import os
 from fastapi import FastAPI
 from pydantic import BaseModel
 import google.generativeai as genai
 
-from config import (
-    GEMINI_API_KEY,
-    GEMINI_MODEL,
-    APPS_SCRIPT_URL,
-)
+# from config import (
+    # GEMINI_API_KEY,
+    # GEMINI_MODEL,
+    # APPS_SCRIPT_URL,
+# )
+
+# -------------------------------------------------------------------
+# 🔧 SETUP KEYS and URLs
+# -------------------------------------------------------------------
+# SPREADSHEET_ID = os.getenv("SPREADSHEET_ID")
+# CLIENTS_SHEET = "Clients"
+# CAMPAIGNS_SHEET = "Campaigns"
+# GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+# GEMINI_MODEL = os.environ.get("GEMINI_MODEL")
+# APPS_SCRIPT_URL = os.environ.get("APPS_SCRIPT_URL")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "").strip()
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
+APPS_SCRIPT_URL = os.environ.get("APPS_SCRIPT_URL", "").strip()
+# SERVICE_ACCOUNT_FILE = os.getenv("SERVICE_ACCOUNT_FILE")
+
+print("GEMINI_MODEL:", GEMINI_API_KEY)
+print("GEMINI_MODEL:", GEMINI_MODEL)
+print("GEMINI_MODEL:", APPS_SCRIPT_URL)
 
 # ---------------------------------------------------------
 # CONFIGURE GEMINI
@@ -20,19 +39,20 @@ app = FastAPI()
 from fastapi.middleware.cors import CORSMiddleware
 
 origins = [
-    "http://localhost:8080", # Vite dev
-    "http://127.0.0.1:8080",
-    "http://localhost:8081",
-    "http://localhost:5173", # Vite alt port
-    "http://127.0.0.1:5173",
-    # "https://<your-project>.web.app",        # Firebase hosting on .app
-    # "https://<your-project>.firebaseapp.com" # hosting on domain
+    # "http://localhost:8080", # Vite dev
+    # "http://127.0.0.1:8080",
+    # "http://localhost:8081",
+    # "http://127.0.0.1:8081",
+    # "http://localhost:5173", # Vite alt port
+    # "http://127.0.0.1:5173",
+    "https://ai-revenue-manager-chatbott.web.app", # Firebase hosting on .app
+    "https://ai-revenue-manager-chatbott.firebaseapp.com", # hosting on domain
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
+    allow_origins=origins, #["*"],
+    allow_credentials=False, #True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -125,25 +145,68 @@ def convert_messages(history, system_prompt, client_name):
     return messages
 
 # ---------------------------------------------------------
+# Cloud Run’s health check
+# ---------------------------------------------------------
+# from fastapi import HTTPException
+
+# @app.on_event("startup")
+# async def startup_event():
+#     if not GEMINI_API_KEY or not GEMINI_MODEL:
+#         raise RuntimeError("GEMINI_API_KEY or GEMINI_MODEL not set!")
+#     genai.configure(api_key=GEMINI_API_KEY)
+
+@app.get("/")
+async def root():
+    return {"chatbot backend deployment status": "ok"}
+
+# ---------------------------------------------------------
 # LLM CHAT ENDPOINT
 # ---------------------------------------------------------
 @app.post("/llm-chat", response_model=ChatResponse)
 async def llm_chat(req: ChatRequest):
+    print("🔥 /llm-chat endpoint HIT")
+    # return {"response": "Hello world"}
 
     # full chat history converted
     messages = convert_messages(req.chatHistory, SYSTEM_PROMPT, req.clientName or "Guest")
-
     # append fresh message
-    messages.append({
-        "role": "user",
-        "parts": [{"text": req.userMessage}]
-    })
+    messages.append({"role": "user", "parts": [{"text": req.userMessage}]})
 
-    model = genai.GenerativeModel(GEMINI_MODEL)
-    response = model.generate_content(contents=messages)
+    # Check GEMINI_API_KEY
+    if not GEMINI_API_KEY:
+        # raise RuntimeError("GEMINI_API_KEY is not set in the environment")
+        # return {"status": "error", "message": "GEMINI API Key not configured"}
+        return {"response": "No gemini api"}
+    # test print if gemini api key is read successfully
+    print("🔥 GEMINI_API_KEY starts with:", GEMINI_API_KEY[:6])
 
-    ai_reply = response.text
-
+    # Fetch gemini api key
+    import google.generativeai as genai
+    genai.configure(api_key=GEMINI_API_KEY)
+    
+    if not GEMINI_MODEL:
+        # raise RuntimeError("GEMINI_MODEL is not set in the environment")
+        # return {"status": "error", "message": "GEMINI Model not configured"}
+        return {"response": "No gemini model"}
+    # test print if gemini model is read successfully
+    print("🔥 GEMINI_MODEL:", GEMINI_MODEL)
+    
+    # return {"response": "gemini api and model are both fine"}
+    
+    # fetch gemini model and generate response
+    try:
+        # model = genai.models.TextGenerationModel(GEMINI_MODEL)
+        # response = model.generate_text(messages)
+        # ai_reply = response.text
+        model = genai.GenerativeModel(model_name=GEMINI_MODEL)
+        response = model.generate_content(contents=messages)
+        ai_reply = response.text
+    except Exception as e:
+        print("❌ Gemini API error:", e)
+        # return {"status": "error", "message": str(e)}
+        return {"response": str(e)}
+    
+    # return {"response": "no exception"}
     return ChatResponse(response=ai_reply)
 
 # ---------------------------------------------------------
@@ -183,16 +246,17 @@ async def save_chat(request: Request):
     Receives chat session from frontend and forwards it to Apps Script
     so it can be saved in Google Sheets.
     """
+    
+    print("🔥 /save-chat endpoint HIT")
+
     try:
         session = await request.json()
         print("📤 Received chat session:", session)
-        # import os
-        # APPS_SCRIPT_URL="https://script.google.com/macros/s/AKfycbwz15KPgZF4t8aQ_YmR-pWNHixj2nYfykXMH3PXzZ-qqMssf9_inBgZwAfTZNVbGt5u/exec"
-        # APPS_SCRIPT_URL = os.environ.get(APPS_SCRIPT_URL)
-        if not APPS_SCRIPT_URL:
-            return {"status": "error", "message": "Apps Script URL not configured"}
 
-        # test code to check web app URL
+        if not APPS_SCRIPT_URL:
+            # raise RuntimeError("APPS_SCRIPT_URL is not set in the environment")
+            return {"status": "error", "message": "Apps Script URL not configured"}
+        # test print if apps script url is read successfully
         print("APPS_SCRIPT_URL:", APPS_SCRIPT_URL)
 
         # Forward to Apps Script
@@ -223,4 +287,10 @@ async def save_chat(request: Request):
         print("❌ ERROR saving chat:", e)
         return {"status": "error", "message": str(e)}
 
-    
+# ---------------------------------------------------------
+# Python-based port reading
+# ---------------------------------------------------------
+# if __name__ == "__main__":
+#     import os, uvicorn
+#     port = int(os.environ.get("PORT", 8080))
+#     uvicorn.run("app:app", host="0.0.0.0", port=port)

@@ -1,4 +1,5 @@
 # Standard Library (no install needed)
+import os
 import re
 import time
 import json
@@ -13,16 +14,16 @@ from dateutil import parser
 
 
 from config import (
-    SPREADSHEET_ID,
-    CLIENTS_SHEET,
-    CAMPAIGNS_SHEET,
-    GEMINI_API_KEY,
-    GEMINI_MODEL,
+    # SPREADSHEET_ID,
+    # CLIENTS_SHEET,
+    # CAMPAIGNS_SHEET,
+    # GEMINI_API_KEY,
+    # GEMINI_MODEL,
     BATCH_SIZE,
     REQUEST_DELAY,
     # MAX_RETRIES,
     # RETRY_DELAY,
-    SERVICE_ACCOUNT_FILE,
+    # SERVICE_ACCOUNT_FILE,
     MSG_SERVICE_PYTHON,
     FRONTEND_TEMPLATE_COLUMNS,
 )
@@ -39,19 +40,77 @@ if(MSG_SERVICE_PYTHON):
     )
 
 # -------------------------------------------------------------------
+# 🔧 SETUP KEYS and URLs
+# -------------------------------------------------------------------
+# SPREADSHEET_ID = os.getenv("SPREADSHEET_ID")
+SPREADSHEET_ID = os.environ.get("SPREADSHEET_ID", "").strip()
+CLIENTS_SHEET = "Clients"
+CAMPAIGNS_SHEET = "Campaigns"
+# GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+# GEMINI_MODEL = os.environ.get("GEMINI_MODEL")
+# APPS_SCRIPT_URL = os.environ.get("APPS_SCRIPT_URL")
+# SERVICE_ACCOUNT_FILE = os.getenv("SERVICE_ACCOUNT_FILE")
+
+# -------------------------------------------------------------------
 # 🔧 SETUP
 # -------------------------------------------------------------------
 def init_google_sheets():
-    creds = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE,
-        scopes=["https://www.googleapis.com/auth/spreadsheets"]
-    )
-    return build("sheets", "v4", credentials=creds).spreadsheets()
+###################################################################################    
+    # print("SERVICE_ACCOUNT_FILE env:", os.getenv("SERVICE_ACCOUNT_FILE"))
 
+    # if os.path.exists(os.getenv("SERVICE_ACCOUNT_FILE")):
+    #     print("Directory exists. Contents:")
+    #     print(os.listdir(os.getenv("SERVICE_ACCOUNT_FILE")))
+    # else:
+    #     print("Secret directory does NOT exist!")
+###################################################################################
+    # Secret is injected as JSON STRING (not file)
+    # This approach doesn't need a service account, but just JSON credentials.
+    # sa_json_str = os.getenv("SERVICE_ACCOUNT_FILE")
+
+    # if not sa_json_str:
+    #     raise Exception("SERVICE_ACCOUNT_FILE secret not found")
+
+    # sa_info = json.loads(sa_json_str)
+
+    # creds = service_account.Credentials.from_service_account_info(
+    #     sa_info,
+    #     scopes=["https://www.googleapis.com/auth/spreadsheets"]
+    # )
+
+    # return build("sheets", "v4", credentials=creds).spreadsheets()
+###################################################################################
+    # This approach needs a service account and not just JSON credentials.
+    from googleapiclient.discovery import build
+    import google.auth
+
+    # Automatically picks up Cloud Run service account credentials
+    credentials, _ = google.auth.default()
+
+    service = build("sheets", "v4", credentials=credentials)
+    return service.spreadsheets()
+###################################################################################
+    # creds = service_account.Credentials.from_service_account_file(
+    #     SERVICE_ACCOUNT_FILE,
+    #     scopes=["https://www.googleapis.com/auth/spreadsheets"]
+    # )
+    # return build("sheets", "v4", credentials=creds).spreadsheets()
+###################################################################################
 
 def init_gemini():
-    genai.configure(api_key=GEMINI_API_KEY)
-    return genai.GenerativeModel(GEMINI_MODEL)
+    # api_key = os.getenv("GEMINI_API_KEY")
+    # model = os.getenv("GEMINI_MODEL")
+    api_key = os.environ.get("GEMINI_API_KEY", "").strip()
+    model = os.environ.get("GEMINI_MODEL", "").strip()
+
+    if not api_key:
+        raise Exception("GEMINI_API_KEY missing")
+
+    if not model:
+        raise Exception("GEMINI_MODEL missing")
+
+    genai.configure(api_key=api_key)
+    return genai.GenerativeModel(model)
 
 
 # -------------------------------------------------------------------

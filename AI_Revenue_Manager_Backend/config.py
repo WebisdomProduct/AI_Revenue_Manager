@@ -9,14 +9,14 @@ import os
 load_dotenv()
 
 # --- Google Sheets ---
-SPREADSHEET_ID = os.getenv("SPREADSHEET_ID") # read from OS env
-CLIENTS_SHEET = "Clients"
-CAMPAIGNS_SHEET = "Campaigns"
+# SPREADSHEET_ID = os.getenv("SPREADSHEET_ID") # read from OS env
+# CLIENTS_SHEET = "Clients"
+# CAMPAIGNS_SHEET = "Campaigns"
 
 # --- Gemini API ---
 # Create an API key at https://aistudio.google.com/app/apikey
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL")
+# GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+# GEMINI_MODEL = os.getenv("GEMINI_MODEL")
 
 # --- Batching & Rate Limiting ---
 BATCH_SIZE = 5
@@ -25,7 +25,7 @@ MAX_RETRIES = 3
 RETRY_DELAY = 5          # seconds before retry
 
 # --- Credentials ---
-SERVICE_ACCOUNT_FILE = os.getenv("SERVICE_ACCOUNT_FILE")
+# SERVICE_ACCOUNT_FILE = os.getenv("SERVICE_ACCOUNT_FILE")
 
 # ----- Python Backend Messaging Service Switch -----
 MSG_SERVICE_PYTHON = False
